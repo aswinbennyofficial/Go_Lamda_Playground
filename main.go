@@ -1,15 +1,23 @@
-// main.go
 package main
 
 import (
+	"log"
+
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func hello() (string, error) {
-	return "Hello λ!", nil
+func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error){
+	log.Println("Hello world")
+	
+	response := events.APIGatewayProxyResponse{
+		StatusCode: 200,
+		Body: "This is body",
+	}
+
+	return response,nil
 }
 
-func main() {
-	// Make the handler available for Remote Procedure Call by AWS Lambda
-	lambda.Start(hello)
+func main(){
+	lambda.Start(handler)
 }
