@@ -8,12 +8,10 @@ import (
 	"strings"
 )
 
-// Struct for the response
 type RepoResponse struct{
 	LanguagePercent map[string]float32 `json:"language_percent"`
 }
 
-// struct to map json used for calculating language percentage
 type RepoInfo struct{
 	Id int `json:"id"`
 	Name string `json:"name"`
@@ -21,28 +19,6 @@ type RepoInfo struct{
 	Url string `json:"url"`
 	Language string `json:"language"`
 }
-
-// Struct to save the repo info for the recent commit feature
-type Repo struct{
-	Id int `json:"id"`
-	Name string `json:"name"`
-	Url string `json:"Url"`
-}
-
-// Struct to store the payload field in the recent commit feature
-type Payload struct{
-
-}
-
-// struct used to save the latest commit and related from an account
-type CommitInfo struct{
-	Id int `json:"id"`
-	Type string `json:"type"`
-	Repoinfo Repo `json:"repo"`
-	Payload Payload `json:"payload"`
-
-}
-
 
 
 
@@ -52,9 +28,6 @@ func githubHandle(w http.ResponseWriter, r *http.Request){
 	path= strings.Replace(path, "/github/", "", 1)
 	// trim away succeeding '/' if exists 
 	path= strings.ReplaceAll(path, "/", "")
-
-	
-	//	LANGUAGE PERCENTAGE
 
 	url:="https://api.github.com/users/"+path+"/repos"
 
@@ -85,9 +58,8 @@ func githubHandle(w http.ResponseWriter, r *http.Request){
 	// Number of non null lang usages
 	var num_of_langs int
 	
-	// Traverse through entire language and makes a map for the usage 
+	// Traverse through entire language and makes a map for the usage
 	for i,_:=range repolist{
-		// using the condition isFork, it displays only non forked  repos
 		if repolist[i].Language !="" && repolist[i].IsFork==false{
 			num_of_langs++
 			map_of_lang[repolist[i].Language]++
@@ -122,16 +94,8 @@ func githubHandle(w http.ResponseWriter, r *http.Request){
 	//Assigning LanguagePercent field to the previously created map
 	reporesponse.LanguagePercent=map_of_lang
 
-
-	// RECENT COMMIT
-	
-
-
-
-
-	// RESPONSE
 	// Converting struct object to json
-	dataJSON,err:=json.Marshal(reporesponse)
+	jsonResponse,err:=json.Marshal(reporesponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -140,35 +104,14 @@ func githubHandle(w http.ResponseWriter, r *http.Request){
 	// setting header to let browser know that the response is json
 	w.Header().Set("Content-Type", "application/json")
 	// writing response
-	w.Write(dataJSON)
+	w.Write(jsonResponse)
 
-
-
-}
-
-func commitHandle(w http.ResponseWriter, r *http.Request){
-	// fetch username from <url>/github/<username>
-	path:=r.URL.Path
-	path= strings.Replace(path, "/github/", "", 1)
-	// trim away succeeding '/' if exists 
-	path= strings.ReplaceAll(path, "/", "")
-
-
-
-	url:="https://api.github.com/users/"+path+"/events/public"
-	responseJSON,err:=http.Get(url)
-	if err!=nil{
-		log.Println("Error on fetching Github API: ",err)
-		http.Error(w, "Github API request failed", 500)
-		return 
-	}
 
 
 }
 
 func main(){
 	http.HandleFunc("/github/",githubHandle)
-	http.HandleFunc("/commit/",commitHandle)
 
 	fmt.Println("Starting server at 8080..")
 	http.ListenAndServe(":8080",nil)
