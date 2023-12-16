@@ -26,13 +26,11 @@ type RepoInfo struct {
 
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	// BUG 
+	// Takes in github username via query parameters `<url>?username=<github username>` 
 	username := request.QueryStringParameters["username"]
 	
-
-
 	// Log the GitHub username for debugging purposes
-	log.Printf("GitHub Username:", username)
+	log.Printf("GitHub Username: %s", username)
 	//var username string
 	if username==""{
 		username="aswinbennyofficial"
@@ -105,6 +103,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return events.APIGatewayProxyResponse{}, err
 	}
 
+	// Create a response  
 	response := events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Headers: map[string]string{
