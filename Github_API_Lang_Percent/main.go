@@ -23,13 +23,17 @@ type RepoInfo struct {
 	Language string `json:"language"`
 }
 
+
+
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// BUG 
-	username:=request.Path
+	username := request.QueryStringParameters["username"]
+	
+
 
 	// Log the GitHub username for debugging purposes
-	log.Printf("GitHub Username: %s", username)
-
+	log.Printf("GitHub Username:", username)
+	//var username string
 	if username==""{
 		username="aswinbennyofficial"
 	}
