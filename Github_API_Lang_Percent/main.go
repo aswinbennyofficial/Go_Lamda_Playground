@@ -6,113 +6,117 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
-type RepoResponse struct{
+type RepoResponse struct {
 	LanguagePercent map[string]float32 `json:"language_percent"`
 }
 
-type RepoInfo struct{
-	Id int `json:"id"`
-	Name string `json:"name"`
-	IsFork bool `json:"fork"`
-	Url string `json:"url"`
+type RepoInfo struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	IsFork   bool   `json:"fork"`
+	URL      string `json:"url"`
 	Language string `json:"language"`
 }
 
+func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// Get the segments of the path
+	pathSegments := strings.Split(request.Path, "/")
 
+	// Get the last segment (GitHub username)
+	username := pathSegments[len(pathSegments)-1]
 
-func githubHandle(w http.ResponseWriter, r *http.Request){
-	// fetch username from <url>/github/<username>
-	path:=r.URL.Path
-	path= strings.Replace(path, "/github/", "", 1)
-	// trim away succeeding '/' if exists 
-	path= strings.ReplaceAll(path, "/", "")
+	
 
-	url:="https://api.github.com/users/"+path+"/repos"
+	// Log the GitHub username for debugging purposes
+	log.Printf("GitHub Username: %s", username)
 
-	// Fetch the json response from github's API
-	responseJSON,err:=http.Get(url)
-	if err!=nil{
-		log.Println("Error on fetching Github API: ",err)
-		http.Error(w, "Github API request failed", 500)
-		return 
+	if username==""{
+		username="aswinbennyofficial"
 	}
 
+	// Construct the GitHub API URL
+	url := "https://api.github.com/users/" + username + "/repos"
+
+	// Log the GitHub API URL for debugging purposes
+	log.Printf("GitHub API URL: %s", url)
+
+	// Fetch the JSON response from GitHub's API
+	responseJSON, err := http.Get(url)
+	if err != nil {
+		log.Printf("Error fetching GitHub API: %s", err)
+		return events.APIGatewayProxyResponse{}, err
+	}
 	defer responseJSON.Body.Close()
 
-	// make an object of RepoList struct
-	var repolist []RepoInfo	
+	// Check the HTTP status code in the response
+	if responseJSON.StatusCode < 200 || responseJSON.StatusCode >= 300 {
+		log.Printf("GitHub API returned non-2xx status code: %d", responseJSON.StatusCode)
+		return events.APIGatewayProxyResponse{}, fmt.Errorf("GitHub API returned non-2xx status code: %d", responseJSON.StatusCode)
+	}
+
+	// Make an object of RepoList struct
+	var repolist []RepoInfo
 
 	// Decode JSON body to struct
 	if err := json.NewDecoder(responseJSON.Body).Decode(&repolist); err != nil {
-		http.Error(w, "Error decoding JSON", http.StatusInternalServerError)
-		return
+		log.Printf("Error decoding JSON to struct: %s", err)
+		return events.APIGatewayProxyResponse{}, err
 	}
 
-	
+	// Log the number of repositories fetched from GitHub
+	log.Printf("Number of Repositories Fetched: %d", len(repolist))
 
-	// Making a new map to save the language and number of repos that uses it
-	map_of_lang:=make(map[string]float32)
+	// Making a new map to save the language and the number of repos that use it
+	mapOfLang := make(map[string]float32)
 
-	// Number of non null lang usages
-	var num_of_langs int
-	
-	// Traverse through entire language and makes a map for the usage
-	for i,_:=range repolist{
-		if repolist[i].Language !="" && repolist[i].IsFork==false{
-			num_of_langs++
-			map_of_lang[repolist[i].Language]++
+	// Number of non-null lang usages
+	var numOfLangs int
+
+	// Traverse through the entire language and make a map for the usage
+	for i := range repolist {
+		if repolist[i].Language != "" && !repolist[i].IsFork {
+			numOfLangs++
+			mapOfLang[repolist[i].Language]++
 		}
 	}
 
-	// Its time to calculate the percentage usage of these langs
-	for key, value := range map_of_lang {
-		map_of_lang[key] = (value * 100.0) / float32(num_of_langs)
+	// Calculate the percentage usage of these langs
+	for key, value := range mapOfLang {
+		mapOfLang[key] = (value * 100.0) / float32(numOfLangs)
 	}
 
-	/*
-	// This part directly converts map as a json
-
-	// Convert the map to JSON
-	jsonData, err := json.Marshal(map_of_lang)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the http.ResponseWriter
-	w.Write(jsonData)
-	*/
-
-	// Preparing response
+	// Preparing the response
 	// Creating an object for struct RepoResponse
 	var reporesponse RepoResponse
-	//Assigning LanguagePercent field to the previously created map
-	reporesponse.LanguagePercent=map_of_lang
+	// Assigning LanguagePercent field to the previously created map
+	reporesponse.LanguagePercent = mapOfLang
 
-	// Converting struct object to json
-	jsonResponse,err:=json.Marshal(reporesponse)
+	// Log the final language percentages for debugging purposes
+	log.Printf("Language Percentages: %v", mapOfLang)
+
+	// Converting struct object to JSON
+	jsonResponse, err := json.Marshal(reporesponse)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		log.Printf("Error converting struct to JSON object: %s", err)
+		return events.APIGatewayProxyResponse{}, err
 	}
 
-	// setting header to let browser know that the response is json
-	w.Header().Set("Content-Type", "application/json")
-	// writing response
-	w.Write(jsonResponse)
+	response := events.APIGatewayProxyResponse{
+		StatusCode: 200,
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+		},
+		Body: string(jsonResponse),
+	}
 
-
-
+	return response, nil
 }
 
-func main(){
-	http.HandleFunc("/github/",githubHandle)
-
-	fmt.Println("Starting server at 8080..")
-	http.ListenAndServe(":8080",nil)
+func main() {
+	lambda.Start(handler)
 }
