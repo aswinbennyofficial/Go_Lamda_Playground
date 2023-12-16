@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+type RepoResponse struct{
+	LanguagePercent map[string]float32 `json:"language_percent"`
+}
 
 type RepoInfo struct{
 	Id int `json:"id"`
@@ -68,8 +71,42 @@ func githubHandle(w http.ResponseWriter, r *http.Request){
 		map_of_lang[key] = (value * 100.0) / float32(num_of_langs)
 	}
 
-	
-	
+	/*
+	// This part directly converts map as a json
+
+	// Convert the map to JSON
+	jsonData, err := json.Marshal(map_of_lang)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the JSON response to the http.ResponseWriter
+	w.Write(jsonData)
+	*/
+
+	// Preparing response
+	// Creating an object for struct RepoResponse
+	var reporesponse RepoResponse
+	//Assigning LanguagePercent field to the previously created map
+	reporesponse.LanguagePercent=map_of_lang
+
+	// Converting struct object to json
+	jsonResponse,err:=json.Marshal(reporesponse)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// setting header to let browser know that the response is json
+	w.Header().Set("Content-Type", "application/json")
+	// writing response
+	w.Write(jsonResponse)
+
+
 
 }
 
