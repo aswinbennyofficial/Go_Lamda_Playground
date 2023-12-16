@@ -8,10 +8,6 @@ import (
 	"strings"
 )
 
-type RepoResponse struct{
-	Language map[string]float32
-
-}
 
 type RepoInfo struct{
 	Id int `json:"id"`
@@ -51,27 +47,29 @@ func githubHandle(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	// fmt.Println(repolist[0].Name)
-	// fmt.Println(repolist[0].Url)
-	// fmt.Println(repolist[0].IsFork)
-	// fmt.Println(repolist[0].Language)
-	// fmt.Println(repolist[0].Id)
+	
 
 	// Making a new map to save the language and number of repos that uses it
-	map_of_lang_with_number:=make(map[string]int)
+	map_of_lang:=make(map[string]float32)
 
-	// Traverse through entire language and makes a map
+	// Number of non null lang usages
+	var num_of_langs int
+	
+	// Traverse through entire language and makes a map for the usage
 	for i,_:=range repolist{
 		if repolist[i].Language !=""{
-			map_of_lang_with_number[repolist[i].Language]++
+			num_of_langs++
+			map_of_lang[repolist[i].Language]++
 		}
 	}
 
-	for key,value:=range map_of_lang_with_number{
-		fmt.Println(key," ",value)
+	// Its time to calculate the percentage usage of these langs
+	for key, value := range map_of_lang {
+		map_of_lang[key] = (value * 100.0) / float32(num_of_langs)
 	}
 
-
+	
+	
 
 }
 
