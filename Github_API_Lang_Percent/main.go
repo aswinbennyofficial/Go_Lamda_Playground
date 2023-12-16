@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
+	//"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -24,13 +24,8 @@ type RepoInfo struct {
 }
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	// Get the segments of the path
-	pathSegments := strings.Split(request.Path, "/")
-
-	// Get the last segment (GitHub username)
-	username := pathSegments[len(pathSegments)-1]
-
-	
+	// BUG 
+	username:=request.Path
 
 	// Log the GitHub username for debugging purposes
 	log.Printf("GitHub Username: %s", username)
