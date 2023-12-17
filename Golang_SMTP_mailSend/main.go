@@ -16,11 +16,12 @@ func main(){
         log.Fatalf("Error loading environment variables file")
     }
 
-	// SMTP server Credentials
+	// SMTP server Credentials from .env file
 	SMTP_USERNAME := os.Getenv("SMTP_USERNAME")
 	SMTP_PASSWORD := os.Getenv("SMTP_PASSWORD")
 	SMTP_HOST :=os.Getenv("SMTP_HOST")
 	FROM_EMAIL :=os.Getenv("FROM_EMAIL")
+	SMTP_PORT :=os.Getenv("SMTP_PORT")
 	
 	log.Println("SMTP CREDS init ",SMTP_USERNAME, " ", SMTP_PASSWORD," ",SMTP_HOST )
 	
@@ -28,22 +29,12 @@ func main(){
 	auth:=smtp.PlainAuth("",SMTP_USERNAME,SMTP_PASSWORD,SMTP_HOST)
 
 
-	// Setup other variables
-
 	// List of emails you want to send the email
+	// toList := []string{"email1@gmail.com","email2@gmail.com","email3@gmail.com"}
 	toList := []string{"ses@aswinbenny.in"}
 
-	
 
-	// Port of SMTP server
-	port := "587"
-
-	// msg
-	// msg := []byte("To: recipient@example.net\r\n" +
-	// 	"Subject: discount Gophers!\r\n" +
-	// 	"\r\n" +
-	// 	"This is the email body.\r\n")
-
+	// mail
 	subject:="Hello guys"
 	body:="This is body"
 
@@ -52,7 +43,7 @@ func main(){
 		"\r\n" +
 		body+"\r\n")
 
-		err = smtp.SendMail(SMTP_HOST+":"+port, auth, FROM_EMAIL, toList, msg)
+		err = smtp.SendMail(SMTP_HOST+":"+SMTP_PORT, auth, FROM_EMAIL, toList, msg)
  
 		// handling the errors
 		if err != nil {
@@ -61,8 +52,5 @@ func main(){
 		}
 	 
 		fmt.Println("Successfully sent mail to all user in toList")
-
-
-
 
 }
