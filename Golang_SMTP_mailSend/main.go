@@ -44,10 +44,13 @@ func main(){
 	// 	"\r\n" +
 	// 	"This is the email body.\r\n")
 
+	subject:="Hello guys"
+	body:="This is body"
+
 	msg := []byte(
-		"Subject: Hello Gophers!\r\n" +
+		"Subject: "+subject+"\r\n" +
 		"\r\n" +
-		"This is the email body.\r\n")
+		body+"\r\n")
 
 		err = smtp.SendMail(SMTP_HOST+":"+port, auth, FROM_EMAIL, toList, msg)
  
