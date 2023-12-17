@@ -1,0 +1,14 @@
+# Rename this file to .env 
+
+# SMTP credentials
+SMTP_USERNAME=""
+SMTP_PASSWORD=""
+
+
+# SMTP server information
+SMTP_HOST=""
+
+
+# Senders email address
+FROM_EMAIL=""
+
