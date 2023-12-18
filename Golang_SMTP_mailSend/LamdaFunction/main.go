@@ -68,6 +68,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		"From: "+FROM_EMAIL+"\r\n"+
 		"Reply-To: " + reply_to + "\r\n" +
 			"Subject: " + subject + "\r\n" +
+			"MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n" +
 			"\r\n" +
 			body + "\r\n")
 
